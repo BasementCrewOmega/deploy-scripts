@@ -3,11 +3,6 @@
 # Ensure all commands below will be successful or fail if not
 set -e
 
-if [ -n "$SSH_ASKPASS" ]; then
-	# default asking true
-	SSH_ASKPASS=true
-fi
-
 # Enter password if called by ssh-add
 [ -n "$SSH_ASKPASS" ] && [ -n "$DISPLAY" ] && {
 	[ ! -f ".ssh-add" ]
