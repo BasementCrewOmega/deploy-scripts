@@ -35,16 +35,12 @@ set -e
 # Initialize the ssh-agent so we can use Git later for deploying
 eval $(ssh-agent)
 # Set up our Git environment
-$deploy_scripts/setup_git
+#$deploy_scripts/setup_git
 
 if [ ! -d "$GIT_DIR" ]; then
   # Clone our Maven repo repository
-  git clone $GIT_REPO $GIT_DIR
-  pushd .
-  cd $GIT_DIR
-  git config --local user.name $GIT_NAME
-  git config --local user.email $GIT_EMAIL
-  popd
+  echo "Could not publish new artifacts, have you run setup_repo yet?"
+  exit 0
 fi
 
 # Setup repo path environment variables
