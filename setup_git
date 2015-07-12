@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Ensure all commands below will be successful or fail if not
+set -e
+
+# Enter password if called by ssh-add
+[ -n "$SSH_ASKPASS" ] && [ -n "$DISPLAY" ] && {
+	[ ! -f ".ssh-add" ]
+	touch .ssh-add
+	echo "$KEY_PASS"
+	exit 0
+}
+
+echo && echo "Initializing Git environment..."
+
+GIT_NAME="BasementCrewOmega"
+GIT_EMAIL="deploy@basementcrewomega.github.io"
+KEY_NAME=deploy_key
+
+# We don't need to set up anything if we don't have the passphrase
+[[ -z "$KEY_PASS" || ( -n "$TRAVIS_SECURE_ENV_VARS" && "$TRAVIS_SECURE_ENV_VARS" = "false" ) ]] && {
+	echo "Passphrase is not available, unable to set up Git environment."
+	exit 1
+}
+
+KEY_PATH=~/.ssh/$KEY_NAME
+
+# This is where I am.
+deploy_scripts=$(dirname $0)
+
+mkdir -pv $(dirname $KEY_PATH)
+cp -v "$deploy_scripts/$KEY_NAME" $KEY_PATH
+
+# Change the permissions so it is accepted as SSH key
+chmod -v 600 $KEY_PATH
+
+# Setup detached ASKPASS for ssh
+export SSH_ASKPASS=$0
+export DISPLAY=dummydisplay:0
+
+cleanup() {
+	unset SSH_ASKPASS DISPLAY KEY_PASS
+	rm .ssh-add
+}
+
+true | setsid ssh-add "$KEY_PATH" || {
+	cleanup
+	echo "Failed to add private Git key. Maybe the passphrase is wrong?"
+	exit 1
+}
+
+cleanup
+
+echo "Successfully installed Git SSH key!"
+
+echo "Setting up Git settings..."
+git config --global user.name "$GIT_NAME"
+git config --global user.email "$GIT_EMAIL"
+git config --global push.default simple
+echo "Done! Successfully set up Git environment. :)" && echo
+
